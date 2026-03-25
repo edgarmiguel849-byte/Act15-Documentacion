@@ -7,6 +7,7 @@ Este sistema consiste en un portafolio web que permite a los usuarios consultar 
 ```mermaid
 graph TD
     Usuario -->|Visita el sitio| PortafolioWeb
-    PortafolioWeb -->|Se despliega en| FirebaseHosting
+    PortafolioWeb -->|Se autentica con| AuthModule
+    AuthModule --> FirebaseHosting
     PortafolioWeb -->|Se versiona en| GitHub
     PortafolioWeb -->|Redirige contacto a| WhatsApp
