@@ -4,6 +4,7 @@ Este sistema consiste en un portafolio web que permite a los usuarios consultar 
 
 ## Diagrama de contexto
 
+```mermaid
 graph TD
     Usuario -->|Visita el sitio| PortafolioWeb
     PortafolioWeb -->|Se autentica con| AuthModule
