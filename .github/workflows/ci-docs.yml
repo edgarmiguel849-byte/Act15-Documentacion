@@ -1,0 +1,62 @@
+name: CI Docs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Descarga el contenido del repositorio
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # Instala Node.js para poder usar herramientas de validación
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Instala markdownlint y mermaid-cli
+      - name: Instalar dependencias de validación
+        run: |
+          npm install -g markdownlint-cli @mermaid-js/mermaid-cli
+
+      # Revisa formato básico de Markdown
+      - name: Lint de Markdown
+        run: |
+          markdownlint "**/*.md" --ignore node_modules
+
+      # Extrae bloques Mermaid de los .md y valida su sintaxis
+      - name: Validar diagramas Mermaid
+        shell: bash
+        run: |
+          mkdir -p .tmp_mermaid
+          python3 << 'PY'
+          import re, pathlib
+
+          root = pathlib.Path(".")
+          out = pathlib.Path(".tmp_mermaid")
+          count = 0
+
+          for md in root.rglob("*.md"):
+              text = md.read_text(encoding="utf-8", errors="ignore")
+              matches = re.findall(r"```mermaid\s*\n(.*?)```", text, re.DOTALL)
+              for i, block in enumerate(matches, start=1):
+                  count += 1
+                  fname = out / f"{md.stem}_{i}.mmd"
+                  fname.write_text(block.strip() + "\n", encoding="utf-8")
+
+          print(f"Diagramas encontrados: {count}")
+          if count == 0:
+              raise SystemExit("No se encontraron bloques Mermaid para validar.")
+          PY
+
+          for f in .tmp_mermaid/*.mmd; do
+            echo "Validando $f"
+            mmdc -i "$f" -o "${f%.mmd}.svg"
+          done
